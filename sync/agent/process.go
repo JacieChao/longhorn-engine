@@ -248,7 +248,10 @@ func (s *Server) launchBackup(p *Process) error {
 	// set aws credential
 	if backupType == "s3" {
 		credential := p.Credential
-		if credential == nil || credential[types.AWSAccessKey] == "" || credential[types.AWSSecretKey] == "" {
+		// validate environment variable first, since CronJob has set credential to environment variable.
+		if credential == nil && (os.Getenv(types.AWSAccessKey) == "" && os.Getenv(types.AWSSecretKey) == "") {
+			return errors.New("Could not backup to s3 without setting credential secret")
+		} else if credential[types.AWSAccessKey] == "" || credential[types.AWSSecretKey] == "" {
 			return errors.New("Could not backup to s3 without setting credential secret")
 		}
 		os.Setenv(types.AWSAccessKey, credential[types.AWSAccessKey])
